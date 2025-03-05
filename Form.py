@@ -6,13 +6,15 @@ import hashlib
 def connect_to_mongodb():
     try:
         # Replace with your MongoDB connection string
-        client = MongoClient("mongodb://localhost:27017", serverSelectionTimeoutMS=5000)
+        client = MongoClient("mongodb://localhost:27017/", serverSelectionTimeoutMS=5000)
         db = client["streamlit_auth"]  # Database name
         collection = db["users"]  # Collection name
         client.server_info()  # Test connection
+        st.success("Connected to MongoDB successfully!")
         return collection
     except Exception as e:
         st.error(f"Failed to connect to MongoDB: {e}")
+        st.error("Please ensure MongoDB is running and accessible.")
         return None
 
 # Hash password for security
