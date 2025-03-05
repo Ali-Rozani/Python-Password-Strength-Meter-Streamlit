@@ -1,15 +1,19 @@
 import streamlit as st
-import pymongo
 from pymongo import MongoClient
 import hashlib
 
 # MongoDB connection
 def connect_to_mongodb():
-    # Replace with your MongoDB connection string
-    client = MongoClient("mongodb://localhost:27017")
-    db = client["streamlit_auth"]  # Database name
-    collection = db["users"]  # Collection name
-    return collection
+    try:
+        # Replace with your MongoDB connection string
+        client = MongoClient("mongodb://localhost:27017", serverSelectionTimeoutMS=5000)
+        db = client["streamlit_auth"]  # Database name
+        collection = db["users"]  # Collection name
+        client.server_info()  # Test connection
+        return collection
+    except Exception as e:
+        st.error(f"Failed to connect to MongoDB: {e}")
+        return None
 
 # Hash password for security
 def hash_password(password):
@@ -40,6 +44,8 @@ def main():
 
     # Connect to MongoDB
     collection = connect_to_mongodb()
+    if collection is None:
+        st.stop()  # Stop the app if MongoDB connection fails
 
     # Login/Registration toggle
     menu = ["Login", "Register"]
@@ -54,7 +60,7 @@ def main():
             if authenticate_user(username, password, collection):
                 st.success("Logged in successfully!")
                 # Redirect to another website
-                st.markdown("https://www.password-strength-meter-app.streamlit.app")
+                st.markdown("[Go to Password Strength Meter](https://www.password-strength-meter-app.streamlit.app)")
             else:
                 st.error("Invalid username or password")
 
