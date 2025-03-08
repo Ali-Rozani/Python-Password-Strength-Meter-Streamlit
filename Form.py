@@ -4,18 +4,22 @@ from pymongo.server_api import ServerApi
 import hashlib
 
 # MongoDB connection
+# MongoDB connection
 def connect_to_mongodb():
     uri = "mongodb+srv://alihaiderkasim1:PSM_ATLAS@psm.kkdeq.mongodb.net/?retryWrites=true&w=majority&appName=PSM"
 
-# Create a new client and connect to the server
+    # Create a new client and connect to the server
     client = MongoClient(uri, server_api=ServerApi('1'))
 
-# Send a ping to confirm a successful connection
+    # Send a ping to confirm a successful connection
     try:
         client.admin.command('ping')
         print("Pinged your deployment. You successfully connected to MongoDB!")
+        # Return the collection you want to use
+        return client["your_database_name"]["your_collection_name"]
     except Exception as e:
         print(e)
+        return None
 
 # Hash password for security
 def hash_password(password):
