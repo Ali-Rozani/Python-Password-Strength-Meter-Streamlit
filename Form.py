@@ -3,19 +3,27 @@ import json
 import os
 import bcrypt
 
-def save_to_json(user_data, filename="pending_users.json"):
-    """Saves user data to a JSON file."""
-    if not os.path.exists(filename):
-        with open(filename, "w") as file:
-            json.dump([], file)  # Initialize with an empty list if file doesn't exist
+import streamlit as st
 
-    with open(filename, "r") as file:
-        data = json.load(file)
-    
-    data.append(user_data)
-    
-    with open(filename, "w") as file:
-        json.dump(data, file, indent=4)
+st.title("Register or Login")
+
+# User input fields
+username = st.text_input("Username")
+password = st.text_input("Password", type="password")
+
+if st.button("Register"):
+    if username and password:
+        st.success("Registration Successful! Click the link below to proceed:")
+        st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
+    else:
+        st.error("Please fill in both fields.")
+
+if st.button("Login"):
+    if username and password:
+        st.success("Login Successful! Click the link below to proceed:")
+        st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
+    else:
+        st.error("Please enter both username and password.")
 
 def register_user(username, password):
     """Registers a new user by inserting the credentials into users.json if the username doesn't exist."""
