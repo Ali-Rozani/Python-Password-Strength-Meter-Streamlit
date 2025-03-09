@@ -4,33 +4,35 @@ import os
 import bcrypt
 
 # Function to save user data
-def save_to_json(data, filename="users.json"):
+def save_to_json(data, filename="pending_users.json"):
     if os.path.exists(filename):
         with open(filename, "r") as file:
             try:
                 users = json.load(file)
             except json.JSONDecodeError:
-                users = {}
+                users = []
     else:
-        users = {}
+        users = []
 
-    users[data["username"]] = data["password"]
+    users.append(data)  # Append new user data
 
     with open(filename, "w") as file:
         json.dump(users, file, indent=4)
 
 # Function to register a user
 def register_user(username, password):
-    if os.path.exists("users.json"):
-        with open("users.json", "r") as file:
+    filename = "pending_users.json"
+
+    if os.path.exists(filename):
+        with open(filename, "r") as file:
             try:
                 users = json.load(file)
             except json.JSONDecodeError:
-                users = {}
+                users = []
     else:
-        users = {}
+        users = []
 
-    if username in users:
+    if any(user["username"] == username for user in users):
         return False, "User already exists. Please choose a different username."
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -39,19 +41,22 @@ def register_user(username, password):
 
 # Function to login a user
 def login_user(username, password):
-    if not os.path.exists("users.json"):
+    filename = "pending_users.json"
+
+    if not os.path.exists(filename):
         return False, "User does not exist. Please register first."
 
-    with open("users.json", "r") as file:
+    with open(filename, "r") as file:
         try:
             users = json.load(file)
         except json.JSONDecodeError:
-            users = {}
+            users = []
 
-    if username not in users:
+    user = next((user for user in users if user["username"] == username), None)
+    if not user:
         return False, "User does not exist. Please register first."
 
-    if not bcrypt.checkpw(password.encode('utf-8'), users[username].encode('utf-8')):
+    if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
         return False, "Incorrect username or password."
 
     return True, "Login successful!"
@@ -73,8 +78,10 @@ if action == "Register":
         else:
             success, message = register_user(username, password)
             if success:
-                st.success("Registration Successful!")
-                st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
+                st.success("Registration Successful! Redirecting...")
+                st.markdown("""
+                    <meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">
+                """, unsafe_allow_html=True)
             else:
                 st.error(message)
 
@@ -86,7 +93,9 @@ elif action == "Login":
     if st.button("Login"):
         success, message = login_user(username, password)
         if success:
-            st.success("Login Successful!")
-            st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
+            st.success("Login Successful! Redirecting...")
+            st.markdown("""
+                <meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">
+            """, unsafe_allow_html=True)
         else:
             st.error(message)
