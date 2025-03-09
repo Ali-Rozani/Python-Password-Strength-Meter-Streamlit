@@ -36,8 +36,9 @@ def register_user(username, password):
     else:
         users = []
 
-    hashed = hash_password(password)
-    user_data = {"username": username, "password": hashed}
+    # Store password in plain text (INSECURE)
+    user_data = {"username": username, "password": password}  # No hashing
+
     save_to_json(user_data)
     return True, "Registration successful!"
 
