@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 import os
+import time
 
 def save_to_json(user_data, filename="pending_users.json"):
     """Saves user data to a JSON file, handling empty or corrupted JSON files."""
@@ -72,6 +73,13 @@ if action == "Register":
             success, message = register_user(username, password)
             if success:
                 st.success(message)
+                st.info("Redirecting to the Password Strength Meter Check App...")
+                time.sleep(2)
+                st.markdown("""
+                    <script>
+                        window.location.href = "https://password-strength-meter-check.streamlit.app";
+                    </script>
+                """, unsafe_allow_html=True)
             else:
                 st.error(message)
 
@@ -86,5 +94,12 @@ elif action == "Login":
         success, message = login_user(username, password)
         if success:
             st.success(message)
+            st.info("Redirecting to the Password Strength Meter Check App...")
+            time.sleep(2)
+            st.markdown("""
+                <script>
+                    window.location.href = "https://password-strength-meter-check.streamlit.app";
+                </script>
+            """, unsafe_allow_html=True)
         else:
             st.error(message)
