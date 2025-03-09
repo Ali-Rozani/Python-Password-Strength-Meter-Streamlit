@@ -17,14 +17,20 @@ def save_to_json(user_data, filename="pending_users.json"):
         json.dump(data, file, indent=4)
 
 def register_user(username, password):
-    """Registers a new user by inserting the credentials into users.json if the username doesn't exist."""
+    """Registers a new user by inserting the credentials into pending_users.json if the username doesn't exist."""
     if os.path.exists("pending_users.json"):
-        with open("pending_users.json", "r") as file:
-            users = json.load(file)
-            if any(user["username"] == username for user in users):
-                return False, "User already exists. Please choose a different username."
+        try:
+            with open("pending_users.json", "r") as file:
+                users = json.load(file)  # Try loading JSON
+                if not isinstance(users, list):  # Ensure it is a list
+                    users = []
+        except (json.JSONDecodeError, ValueError):  # Handle empty/corrupt file
+            users = []
     else:
         users = []
+
+    if any(user["username"] == username for user in users):
+        return False, "User already exists. Please choose a different username."
 
     user_data = {"username": username, "password": password}  # Storing passwords in plain text (INSECURE)
     save_to_json(user_data)
