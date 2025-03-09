@@ -1,17 +1,20 @@
 import streamlit as st
 import json
 import os
-import time
+import bcrypt
 
+hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+# Function to save user data to JSON file
 def save_to_json(user_data, filename="pending_users.json"):
     """Saves user data to a JSON file, handling empty or corrupted JSON files."""
     if not os.path.exists(filename):
         with open(filename, "w") as file:
-            json.dump([], file)  # Create an empty list if the file doesn't exist
+            json.dump([], file)  # Create empty list if the file doesn't exist
 
     try:
         with open(filename, "r") as file:
-            data = json.load(file)  # Load JSON data
+            data = json.load(file)
             if not isinstance(data, list):  # Ensure it's a list
                 data = []
     except (json.JSONDecodeError, ValueError):  # Handle empty/corrupt file
@@ -22,15 +25,16 @@ def save_to_json(user_data, filename="pending_users.json"):
     with open(filename, "w") as file:
         json.dump(data, file, indent=4)
 
+# Function to register a user
 def register_user(username, password):
-    """Registers a new user by inserting the credentials into pending_users.json if the username doesn't exist."""
+    """Registers a new user by inserting credentials into pending_users.json if the username doesn't exist."""
     if os.path.exists("pending_users.json"):
         try:
             with open("pending_users.json", "r") as file:
-                users = json.load(file)  # Try loading JSON
-                if not isinstance(users, list):  # Ensure it is a list
+                users = json.load(file)
+                if not isinstance(users, list):
                     users = []
-        except (json.JSONDecodeError, ValueError):  # Handle empty/corrupt file
+        except (json.JSONDecodeError, ValueError):
             users = []
     else:
         users = []
@@ -42,6 +46,7 @@ def register_user(username, password):
     save_to_json(user_data)
     return True, "Registration successful!"
 
+# Function to log in a user
 def login_user(username, password):
     """Logs in the user by validating credentials against the users.json file."""
     if not os.path.exists("pending_users.json"):
@@ -73,8 +78,9 @@ if action == "Register":
             success, message = register_user(username, password)
             if success:
                 st.success(message)
-                st.info("Redirecting to the Password Strength Meter Check App...")
-                time.sleep(2)
+                st.info("Redirecting to Password Strength Meter Check...")
+                
+                # Redirect user instantly
                 st.markdown("""
                     <meta http-equiv="refresh" content="0;url=https://password-strength-meter-check.streamlit.app">
                 """, unsafe_allow_html=True)
@@ -92,8 +98,9 @@ elif action == "Login":
         success, message = login_user(username, password)
         if success:
             st.success(message)
-            st.info("Redirecting to the Password Strength Meter Check App...")
-            time.sleep(2)
+            st.info("Redirecting to Password Strength Meter Check...")
+
+            # Redirect user instantly
             st.markdown("""
                 <meta http-equiv="refresh" content="0;url=https://password-strength-meter-check.streamlit.app">
             """, unsafe_allow_html=True)
