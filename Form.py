@@ -6,24 +6,39 @@ import bcrypt
 hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 # Function to save user data to JSON file
-def save_to_json(user_data, filename="pending_users.json"):
-    """Saves user data to a JSON file, handling empty or corrupted JSON files."""
+ef save_to_json(user_data, filename="pending_users.json"):
     if not os.path.exists(filename):
         with open(filename, "w") as file:
-            json.dump([], file)  # Create empty list if the file doesn't exist
+            json.dump([], file)
 
     try:
         with open(filename, "r") as file:
             data = json.load(file)
-            if not isinstance(data, list):  # Ensure it's a list
+            if not isinstance(data, list):
                 data = []
-    except (json.JSONDecodeError, ValueError):  # Handle empty/corrupt file
+    except (json.JSONDecodeError, ValueError):
         data = []
 
     data.append(user_data)
 
     with open(filename, "w") as file:
         json.dump(data, file, indent=4)
+
+# Streamlit UI
+st.title("Register")
+
+username = st.text_input("Username")
+password = st.text_input("Password", type="password")
+
+if st.button("Register"):
+    if username and password:
+        save_to_json({"username": username, "password": password})
+        
+        # ✅ Instead of redirecting automatically, show a clickable button
+        st.success("Registration successful! Click below to proceed:")
+        st.markdown('[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)', unsafe_allow_html=True)
+    else:
+        st.error("Please fill in all fields!")
 
 # Function to register a user
 def register_user(username, password):
