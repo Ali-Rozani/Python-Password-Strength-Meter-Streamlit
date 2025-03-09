@@ -3,65 +3,36 @@ import json
 import os
 import bcrypt
 
-hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-# Function to save user data to JSON file
-ef save_to_json(user_data, filename="pending_users.json"):
+def save_to_json(user_data, filename="pending_users.json"):
+    """Saves user data to a JSON file."""
     if not os.path.exists(filename):
         with open(filename, "w") as file:
-            json.dump([], file)
+            json.dump([], file)  # Initialize with an empty list if file doesn't exist
 
-    try:
-        with open(filename, "r") as file:
-            data = json.load(file)
-            if not isinstance(data, list):
-                data = []
-    except (json.JSONDecodeError, ValueError):
-        data = []
-
+    with open(filename, "r") as file:
+        data = json.load(file)
+    
     data.append(user_data)
-
+    
     with open(filename, "w") as file:
         json.dump(data, file, indent=4)
 
-# Streamlit UI
-st.title("Register")
-
-username = st.text_input("Username")
-password = st.text_input("Password", type="password")
-
-if st.button("Register"):
-    if username and password:
-        save_to_json({"username": username, "password": password})
-        
-        # ✅ Instead of redirecting automatically, show a clickable button
-        st.success("Registration successful! Click below to proceed:")
-        st.markdown('[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)', unsafe_allow_html=True)
-    else:
-        st.error("Please fill in all fields!")
-
-# Function to register a user
 def register_user(username, password):
-    """Registers a new user by inserting credentials into pending_users.json if the username doesn't exist."""
+    """Registers a new user by inserting the credentials into users.json if the username doesn't exist."""
     if os.path.exists("pending_users.json"):
-        try:
-            with open("pending_users.json", "r") as file:
-                users = json.load(file)
-                if not isinstance(users, list):
-                    users = []
-        except (json.JSONDecodeError, ValueError):
-            users = []
+        with open("pending_users.json", "r") as file:
+            users = json.load(file)
+            if any(user["username"] == username for user in users):
+                return False, "User already exists. Please choose a different username."
     else:
         users = []
 
-    if any(user["username"] == username for user in users):
-        return False, "User already exists. Please choose a different username."
-
-    user_data = {"username": username, "password": password}  # Storing passwords in plain text (INSECURE)
+    # Hash the password using bcrypt
+    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    user_data = {"username": username, "password": hashed}  # storing hashed password
     save_to_json(user_data)
     return True, "Registration successful!"
 
-# Function to log in a user
 def login_user(username, password):
     """Logs in the user by validating credentials against the users.json file."""
     if not os.path.exists("pending_users.json"):
@@ -69,8 +40,10 @@ def login_user(username, password):
 
     with open("pending_users.json", "r") as file:
         users = json.load(file)
-        user = next((user for user in users if user["username"] == username and user["password"] == password), None)
+        user = next((user for user in users if user["username"] == username), None)
         if not user:
+            return False, "User does not exist. Please register first."
+        if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
             return False, "Incorrect username or password."
         return True, "Login successful!"
 
@@ -93,12 +66,11 @@ if action == "Register":
             success, message = register_user(username, password)
             if success:
                 st.success(message)
-                st.info("Redirecting to Password Strength Meter Check...")
-                
-                # Redirect user instantly
-                st.markdown("""
-                    <meta http-equiv="refresh" content="0;url=https://password-strength-meter-check.streamlit.app">
-                """, unsafe_allow_html=True)
+                st.info("Redirecting to the Password Strength Meter Check App...")
+                st.markdown(
+                    '<meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">',
+                    unsafe_allow_html=True
+                )
             else:
                 st.error(message)
 
@@ -113,11 +85,10 @@ elif action == "Login":
         success, message = login_user(username, password)
         if success:
             st.success(message)
-            st.info("Redirecting to Password Strength Meter Check...")
-
-            # Redirect user instantly
-            st.markdown("""
-                <meta http-equiv="refresh" content="0;url=https://password-strength-meter-check.streamlit.app">
-            """, unsafe_allow_html=True)
+            st.info("Redirecting to the Password Strength Meter Check App...")
+            st.markdown(
+                '<meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">',
+                unsafe_allow_html=True
+            )
         else:
             st.error(message)
