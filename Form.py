@@ -47,7 +47,7 @@ def login_user(username, password):
     if not os.path.exists("pending_users.json"):
         return False, "User does not exist. Please register first."
 
-    with open("users.json", "r") as file:
+    with open("pending_users.json", "r") as file:
         users = json.load(file)
         user = next((user for user in users if user["username"] == username), None)
         if not user:
