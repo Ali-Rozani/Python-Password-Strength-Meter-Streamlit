@@ -1,16 +1,6 @@
 import streamlit as st
-import bcrypt
 import json
 import os
-
-# --- Utility Functions ---
-def hash_password(password):
-    """Hashes the password using bcrypt."""
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-def verify_password(password, hashed):
-    """Verifies the password against the hashed password."""
-    return bcrypt.checkpw(password.encode(), hashed.encode())
 
 def save_to_json(user_data, filename="pending_users.json"):
     """Saves user data to a JSON file."""
@@ -36,9 +26,7 @@ def register_user(username, password):
     else:
         users = []
 
-    # Store password in plain text (INSECURE)
-    user_data = {"username": username, "password": password}  # No hashing
-
+    user_data = {"username": username, "password": password}  # Storing passwords in plain text (INSECURE)
     save_to_json(user_data)
     return True, "Registration successful!"
 
@@ -49,13 +37,9 @@ def login_user(username, password):
 
     with open("pending_users.json", "r") as file:
         users = json.load(file)
-        user = next((user for user in users if user["username"] == username), None)
+        user = next((user for user in users if user["username"] == username and user["password"] == password), None)
         if not user:
-            return False, "User does not exist. Please register first."
-        
-        if not verify_password(password, user["password"]):
-            return False, "Incorrect password. Please try again."
-        
+            return False, "Incorrect username or password."
         return True, "Login successful!"
 
 # --- Streamlit App UI ---
@@ -77,12 +61,6 @@ if action == "Register":
             success, message = register_user(username, password)
             if success:
                 st.success(message)
-                # Redirecting after a short delay
-                st.info("Redirecting to the Password Strength Meter Check App...")
-                st.markdown(
-                    '<meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">',
-                    unsafe_allow_html=True
-                )
             else:
                 st.error(message)
 
@@ -97,10 +75,5 @@ elif action == "Login":
         success, message = login_user(username, password)
         if success:
             st.success(message)
-            st.info("Redirecting to the Password Strength Meter Check App...")
-            st.markdown(
-                '<meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">',
-                unsafe_allow_html=True
-            )
         else:
             st.error(message)
