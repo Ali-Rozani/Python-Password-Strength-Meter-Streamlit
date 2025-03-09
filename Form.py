@@ -12,7 +12,7 @@ def verify_password(password, hashed):
     """Verifies the password against the hashed password."""
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-def save_to_json(user_data, filename="pending_users.json"):
+def save_to_json(user_data, filename="pending_pending_users.json"):
     """Saves user data to a JSON file."""
     if not os.path.exists(filename):
         with open(filename, "w") as file:
@@ -27,9 +27,9 @@ def save_to_json(user_data, filename="pending_users.json"):
         json.dump(data, file, indent=4)
 
 def register_user(username, password):
-    """Registers a new user by inserting the credentials into users.json if the username doesn't exist."""
-    if os.path.exists("pending_users.json"):
-        with open("users.json", "r") as file:
+    """Registers a new user by inserting the credentials into pending_users.json if the username doesn't exist."""
+    if os.path.exists("pending_pending_users.json"):
+        with open("pending_users.json", "r") as file:
             users = json.load(file)
             if any(user["username"] == username for user in users):
                 return False, "User already exists. Please choose a different username."
@@ -43,8 +43,8 @@ def register_user(username, password):
     return True, "Registration successful!"
 
 def login_user(username, password):
-    """Logs in the user by validating credentials against the users.json file."""
-    if not os.path.exists("pending_users.json"):
+    """Logs in the user by validating credentials against the pending_users.json file."""
+    if not os.path.exists("pending_pending_users.json"):
         return False, "User does not exist. Please register first."
 
     with open("pending_users.json", "r") as file:
