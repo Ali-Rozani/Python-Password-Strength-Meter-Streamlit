@@ -3,6 +3,8 @@ import json
 import os
 import bcrypt
 
+hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
 # Save user data to a JSON file
 def save_to_json(data, filename="users.json"):
     if os.path.exists(filename):
