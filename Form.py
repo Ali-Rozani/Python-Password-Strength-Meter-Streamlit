@@ -44,7 +44,7 @@ def register_user(username, password):
 
 def login_user(username, password):
     """Logs in the user by validating credentials against the pending_users.json file."""
-    if not os.path.exists("pending_pending_users.json"):
+    if not os.path.exists("pending_users.json"):
         return False, "User does not exist. Please register first."
 
     with open("pending_users.json", "r") as file:
