@@ -3,16 +3,21 @@ import json
 import os
 
 def save_to_json(user_data, filename="pending_users.json"):
-    """Saves user data to a JSON file."""
+    """Saves user data to a JSON file, handling empty or corrupted JSON files."""
     if not os.path.exists(filename):
         with open(filename, "w") as file:
-            json.dump([], file)  # Initialize with an empty list if file doesn't exist
+            json.dump([], file)  # Create an empty list if the file doesn't exist
 
-    with open(filename, "r") as file:
-        data = json.load(file)
-    
+    try:
+        with open(filename, "r") as file:
+            data = json.load(file)  # Load JSON data
+            if not isinstance(data, list):  # Ensure it's a list
+                data = []
+    except (json.JSONDecodeError, ValueError):  # Handle empty/corrupt file
+        data = []
+
     data.append(user_data)
-    
+
     with open(filename, "w") as file:
         json.dump(data, file, indent=4)
 
