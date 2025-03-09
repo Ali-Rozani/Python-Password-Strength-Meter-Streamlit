@@ -76,9 +76,7 @@ if action == "Register":
                 st.info("Redirecting to the Password Strength Meter Check App...")
                 time.sleep(2)
                 st.markdown("""
-                    <script>
-                        window.location.href = "https://password-strength-meter-check.streamlit.app";
-                    </script>
+                    <meta http-equiv="refresh" content="0;url=https://password-strength-meter-check.streamlit.app">
                 """, unsafe_allow_html=True)
             else:
                 st.error(message)
@@ -97,9 +95,7 @@ elif action == "Login":
             st.info("Redirecting to the Password Strength Meter Check App...")
             time.sleep(2)
             st.markdown("""
-                <script>
-                    window.location.href = "https://password-strength-meter-check.streamlit.app";
-                </script>
+                <meta http-equiv="refresh" content="0;url=https://password-strength-meter-check.streamlit.app">
             """, unsafe_allow_html=True)
         else:
             st.error(message)
