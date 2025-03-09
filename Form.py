@@ -12,7 +12,7 @@ def verify_password(password, hashed):
     """Verifies the password against the hashed password."""
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-def save_to_json(user_data, filename="pending_pending_users.json"):
+def save_to_json(user_data, filename="pending_users.json"):
     """Saves user data to a JSON file."""
     if not os.path.exists(filename):
         with open(filename, "w") as file:
