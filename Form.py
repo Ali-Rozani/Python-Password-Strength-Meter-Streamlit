@@ -29,7 +29,7 @@ def save_to_json(user_data, filename="pending_users.json"):
 def register_user(username, password):
     """Registers a new user by inserting the credentials into users.json if the username doesn't exist."""
     if os.path.exists("pending_users.json"):
-        with open("users.json", "r") as file:
+        with open("pending_users.json", "r") as file:
             users = json.load(file)
             if any(user["username"] == username for user in users):
                 return False, "User already exists. Please choose a different username."
