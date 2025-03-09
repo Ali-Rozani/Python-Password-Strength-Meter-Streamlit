@@ -3,9 +3,7 @@ import json
 import os
 import bcrypt
 
-hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-# Save user data to a JSON file
+# Function to save user data
 def save_to_json(data, filename="users.json"):
     if os.path.exists(filename):
         with open(filename, "r") as file:
@@ -21,13 +19,10 @@ def save_to_json(data, filename="users.json"):
     with open(filename, "w") as file:
         json.dump(users, file, indent=4)
 
-# Register a new user
+# Function to register a user
 def register_user(username, password):
-    """Registers a user if the username is not already taken."""
-    filename = "users.json"
-
-    if os.path.exists(filename):
-        with open(filename, "r") as file:
+    if os.path.exists("users.json"):
+        with open("users.json", "r") as file:
             try:
                 users = json.load(file)
             except json.JSONDecodeError:
@@ -38,23 +33,16 @@ def register_user(username, password):
     if username in users:
         return False, "User already exists. Please choose a different username."
 
-    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    users[username] = hashed  # Store the hashed password
-
-    with open(filename, "w") as file:
-        json.dump(users, file, indent=4)
-
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    save_to_json({"username": username, "password": hashed_password})
     return True, "Registration successful!"
 
-# Login user
+# Function to login a user
 def login_user(username, password):
-    """Logs in a user if credentials are correct."""
-    filename = "users.json"
-
-    if not os.path.exists(filename):
+    if not os.path.exists("users.json"):
         return False, "User does not exist. Please register first."
 
-    with open(filename, "r") as file:
+    with open("users.json", "r") as file:
         try:
             users = json.load(file)
         except json.JSONDecodeError:
@@ -68,41 +56,37 @@ def login_user(username, password):
 
     return True, "Login successful!"
 
-# --- Streamlit UI ---
-st.title("User Registration & Login")
+# --- Streamlit App UI ---
+st.title("User Registration / Login")
 
-action = st.sidebar.radio("Select Action", ["Register", "Login"])
+action = st.sidebar.selectbox("Select Action", ["Register", "Login"])
 
 if action == "Register":
     st.header("Register")
-    with st.form("registration_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
-        submit_reg = st.form_submit_button("Register")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    confirm_password = st.text_input("Confirm Password", type="password")
 
-    if submit_reg:
+    if st.button("Register"):
         if password != confirm_password:
             st.error("Passwords do not match!")
         else:
             success, message = register_user(username, password)
             if success:
-                st.success("Registration Successful! Click the link below to proceed:")
+                st.success("Registration Successful!")
                 st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
             else:
                 st.error(message)
 
 elif action == "Login":
     st.header("Login")
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit_login = st.form_submit_button("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
 
-    if submit_login:
+    if st.button("Login"):
         success, message = login_user(username, password)
         if success:
-            st.success("Login Successful! Click the link below to proceed:")
+            st.success("Login Successful!")
             st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
         else:
             st.error(message)
