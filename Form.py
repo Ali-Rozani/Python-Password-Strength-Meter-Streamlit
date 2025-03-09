@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 import os
-import bcrypt
 
 # Function to save user data
 def save_to_json(data, filename="pending_users.json"):
@@ -35,8 +34,7 @@ def register_user(username, password):
     if any(user["username"] == username for user in users):
         return False, "User already exists. Please choose a different username."
 
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    save_to_json({"username": username, "password": hashed_password})
+    save_to_json({"username": username, "password": password})  # Store password in plain text
     return True, "Registration successful!"
 
 # Function to login a user
@@ -52,11 +50,8 @@ def login_user(username, password):
         except json.JSONDecodeError:
             users = []
 
-    user = next((user for user in users if user["username"] == username), None)
+    user = next((user for user in users if user["username"] == username and user["password"] == password), None)
     if not user:
-        return False, "User does not exist. Please register first."
-
-    if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
         return False, "Incorrect username or password."
 
     return True, "Login successful!"
@@ -80,7 +75,7 @@ if action == "Register":
             if success:
                 st.success("Registration Successful! Redirecting...")
                 st.markdown("""
-                    <meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">
+                    <meta http-equiv="refresh" content="2;url=password-strength-meter-check.streamlit.app">
                 """, unsafe_allow_html=True)
             else:
                 st.error(message)
@@ -95,7 +90,7 @@ elif action == "Login":
         if success:
             st.success("Login Successful! Redirecting...")
             st.markdown("""
-                <meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">
+                <meta http-equiv="refresh" content="2;url=password-strength-meter-check.streamlit.app">
             """, unsafe_allow_html=True)
         else:
             st.error(message)
