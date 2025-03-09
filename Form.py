@@ -3,61 +3,73 @@ import json
 import os
 import bcrypt
 
-import streamlit as st
-
-st.title("Register or Login")
-
-# User input fields
-username = st.text_input("Username")
-password = st.text_input("Password", type="password")
-
-if st.button("Register"):
-    if username and password:
-        st.success("Registration Successful! Click the link below to proceed:")
-        st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
+# Save user data to a JSON file
+def save_to_json(data, filename="users.json"):
+    if os.path.exists(filename):
+        with open(filename, "r") as file:
+            try:
+                users = json.load(file)
+            except json.JSONDecodeError:
+                users = {}
     else:
-        st.error("Please fill in both fields.")
+        users = {}
 
-if st.button("Login"):
-    if username and password:
-        st.success("Login Successful! Click the link below to proceed:")
-        st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
-    else:
-        st.error("Please enter both username and password.")
+    users[data["username"]] = data["password"]
 
+    with open(filename, "w") as file:
+        json.dump(users, file, indent=4)
+
+# Register a new user
 def register_user(username, password):
-    """Registers a new user by inserting the credentials into users.json if the username doesn't exist."""
-    if os.path.exists("pending_users.json"):
-        with open("pending_users.json", "r") as file:
-            users = json.load(file)
-            if any(user["username"] == username for user in users):
-                return False, "User already exists. Please choose a different username."
-    else:
-        users = []
+    """Registers a user if the username is not already taken."""
+    filename = "users.json"
 
-    # Hash the password using bcrypt
+    if os.path.exists(filename):
+        with open(filename, "r") as file:
+            try:
+                users = json.load(file)
+            except json.JSONDecodeError:
+                users = {}
+    else:
+        users = {}
+
+    if username in users:
+        return False, "User already exists. Please choose a different username."
+
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    user_data = {"username": username, "password": hashed}  # storing hashed password
-    save_to_json(user_data)
+    users[username] = hashed  # Store the hashed password
+
+    with open(filename, "w") as file:
+        json.dump(users, file, indent=4)
+
     return True, "Registration successful!"
 
+# Login user
 def login_user(username, password):
-    """Logs in the user by validating credentials against the users.json file."""
-    if not os.path.exists("pending_users.json"):
+    """Logs in a user if credentials are correct."""
+    filename = "users.json"
+
+    if not os.path.exists(filename):
         return False, "User does not exist. Please register first."
 
-    with open("pending_users.json", "r") as file:
-        users = json.load(file)
-        user = next((user for user in users if user["username"] == username), None)
-        if not user:
-            return False, "User does not exist. Please register first."
-        if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
-            return False, "Incorrect username or password."
-        return True, "Login successful!"
+    with open(filename, "r") as file:
+        try:
+            users = json.load(file)
+        except json.JSONDecodeError:
+            users = {}
 
-# --- Streamlit App UI ---
-st.title("User Registration / Login Page")
-action = st.sidebar.selectbox("Select Action", ["Register", "Login"])
+    if username not in users:
+        return False, "User does not exist. Please register first."
+
+    if not bcrypt.checkpw(password.encode('utf-8'), users[username].encode('utf-8')):
+        return False, "Incorrect username or password."
+
+    return True, "Login successful!"
+
+# --- Streamlit UI ---
+st.title("User Registration & Login")
+
+action = st.sidebar.radio("Select Action", ["Register", "Login"])
 
 if action == "Register":
     st.header("Register")
@@ -66,19 +78,15 @@ if action == "Register":
         password = st.text_input("Password", type="password")
         confirm_password = st.text_input("Confirm Password", type="password")
         submit_reg = st.form_submit_button("Register")
-    
+
     if submit_reg:
         if password != confirm_password:
             st.error("Passwords do not match!")
         else:
             success, message = register_user(username, password)
             if success:
-                st.success(message)
-                st.info("Redirecting to the Password Strength Meter Check App...")
-                st.markdown(
-                    '<meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">',
-                    unsafe_allow_html=True
-                )
+                st.success("Registration Successful! Click the link below to proceed:")
+                st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
             else:
                 st.error(message)
 
@@ -88,15 +96,11 @@ elif action == "Login":
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         submit_login = st.form_submit_button("Login")
-    
+
     if submit_login:
         success, message = login_user(username, password)
         if success:
-            st.success(message)
-            st.info("Redirecting to the Password Strength Meter Check App...")
-            st.markdown(
-                '<meta http-equiv="refresh" content="2;url=https://password-strength-meter-check.streamlit.app">',
-                unsafe_allow_html=True
-            )
+            st.success("Login Successful! Click the link below to proceed:")
+            st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
         else:
             st.error(message)
