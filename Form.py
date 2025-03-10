@@ -1,23 +1,12 @@
 import streamlit as st
-import requests
 import json
 import os
+import requests
 
-# Replace with your PC's IP address
-YOUR_PC_IP = "http://192.168.100.2:8501"  # Change this!
+# Replace with your PC's IP where Flask is running
+YOUR_PC_IP = "http://192.168.100.2:8501"  # Change this to your real IP
 
-JSON_FILE = "users.json"  # Local file for storing users (if needed)
-
-def store_credentials_on_pc(username, password):
-    """Sends new user credentials to your PC's JSON file"""
-    url = f"{YOUR_PC_IP}/store_credentials"
-    data = {"username": username, "password": password}
-    
-    try:
-        response = requests.post(url, json=data)
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        return {"status": "error", "message": str(e)}
+JSON_FILE = "users.json"  # Local storage for users
 
 def load_users():
     """Load user data from local JSON file"""
@@ -33,6 +22,17 @@ def save_users(users):
     """Save user data to local JSON file"""
     with open(JSON_FILE, "w") as file:
         json.dump(users, file, indent=4)
+
+def store_credentials_on_pc(username, password):
+    """Sends new user credentials to your PC's JSON file"""
+    url = f"{YOUR_PC_IP}/store_credentials"
+    data = {"username": username, "password": password}
+    
+    try:
+        response = requests.post(url, json=data)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"status": "error", "message": str(e)}
 
 def register_user(username, password):
     """Registers a user and sends credentials to the main PC"""
