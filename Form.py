@@ -107,7 +107,7 @@ def check_password_strength(password):
 
 # Main application
 def main():
-    st.title("Login Or Register (Credentials Will Be Stored In MongoDB)")
+    st.title("Login Or Register")
     
     # Show database status in sidebar
     st.sidebar.text(f"Database: {st.session_state.mongo_status}")
