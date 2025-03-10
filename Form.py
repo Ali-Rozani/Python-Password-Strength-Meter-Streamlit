@@ -1,59 +1,60 @@
 import streamlit as st
-import sqlite3
-import os
 import requests
+import json
+import os
 
-# Database settings
-DB_URL = "https://raw.githubusercontent.com/your-username/your-repo/main/users.db"  # Update this
-DB_PATH = "users.db"
+# Replace with your PC's IP address
+YOUR_PC_IP = "http://192.168.100.2:8501"  # Change this!
 
-def download_db():
-    """Downloads users.db from GitHub if not found."""
-    if not os.path.exists(DB_PATH):
-        response = requests.get(DB_URL)
-        with open(DB_PATH, "wb") as file:
-            file.write(response.content)
+JSON_FILE = "users.json"  # Local file for storing users (if needed)
 
-def initialize_db():
-    """Creates the users table if it doesn't exist."""
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-download_db()  # Ensure the database exists
-initialize_db()  # Run initialization
-
-# Connect to SQLite database
-conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-cursor = conn.cursor()
-
-# Function to register user
-def register_user(username, password):
+def store_credentials_on_pc(username, password):
+    """Sends new user credentials to your PC's JSON file"""
+    url = f"{YOUR_PC_IP}/store_credentials"
+    data = {"username": username, "password": password}
+    
     try:
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-        conn.commit()
-        return True, "Registration successful!"
-    except sqlite3.IntegrityError:
+        response = requests.post(url, json=data)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"status": "error", "message": str(e)}
+
+def load_users():
+    """Load user data from local JSON file"""
+    if os.path.exists(JSON_FILE):
+        with open(JSON_FILE, "r") as file:
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                return []
+    return []
+
+def save_users(users):
+    """Save user data to local JSON file"""
+    with open(JSON_FILE, "w") as file:
+        json.dump(users, file, indent=4)
+
+def register_user(username, password):
+    """Registers a user and sends credentials to the main PC"""
+    users = load_users()
+
+    # Check if username already exists
+    if any(user["username"] == username for user in users):
         return False, "Username already exists!"
 
-# Function to check login
-def login_user(username, password):
-    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
-    user = cursor.fetchone()
-    return bool(user)
+    # Save locally
+    users.append({"username": username, "password": password})
+    save_users(users)
+
+    # Send credentials to PC
+    response = store_credentials_on_pc(username, password)
+    
+    return response["status"] == "success", response["message"]
 
 # Streamlit UI
 st.title("User Registration / Login")
 
-action = st.sidebar.selectbox("Select Action", ["Register", "Login"])
+action = st.sidebar.selectbox("Select Action", ["Register"])
 
 if action == "Register":
     st.header("Register")
@@ -71,16 +72,3 @@ if action == "Register":
                 st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
             else:
                 st.error(message)
-
-elif action == "Login":
-    st.header("Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        success = login_user(username, password)
-        if success:
-            st.success("Login Successful! Click below to proceed:")
-            st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
-        else:
-            st.error("Incorrect username or password.")
