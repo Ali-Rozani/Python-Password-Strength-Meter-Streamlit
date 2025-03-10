@@ -1,31 +1,31 @@
 from flask import Flask, request, jsonify
-import sqlite3
+import json
+import os
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Allow connections from any computer
+CORS(app)  # Allow connections from any device
 
-DB_PATH = "users.db"  # Path to your PC's users.db file
+JSON_FILE = "users.json"  # File where credentials will be stored
 
-def initialize_db():
-    """Creates the users table if it doesn't exist."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    conn.close()
+def load_users():
+    """Load user data from JSON file"""
+    if os.path.exists(JSON_FILE):
+        with open(JSON_FILE, "r") as file:
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                return []  # If file is corrupted, reset to empty list
+    return []
 
-initialize_db()  # Ensure database exists
+def save_users(users):
+    """Save user data to JSON file"""
+    with open(JSON_FILE, "w") as file:
+        json.dump(users, file, indent=4)
 
 @app.route('/store_credentials', methods=['POST'])
 def store_credentials():
-    """Receives user credentials from Streamlit and saves them in users.db"""
+    """Receives user credentials from Streamlit and saves them in users.json"""
     data = request.json
     username = data.get("username")
     password = data.get("password")
@@ -33,17 +33,18 @@ def store_credentials():
     if not username or not password:
         return jsonify({"status": "error", "message": "Missing data"}), 400
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    users = load_users()
 
-    try:
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success", "message": "User credentials saved!"})
-    except sqlite3.IntegrityError:
-        conn.close()
-        return jsonify({"status": "error", "message": "Username already exists"}), 400
+    # Check if username exists
+    for user in users:
+        if user["username"] == username:
+            return jsonify({"status": "error", "message": "Username already exists"}), 400
+
+    # Add new user
+    users.append({"username": username, "password": password})
+    save_users(users)
+
+    return jsonify({"status": "success", "message": "User credentials saved!"})
 
 if __name__ == '__main__':
-    app.run(host="192.168.100.2", port=8501, debug=True)  # Make server accessible
+    app.run(host="192.168.100.2", port=8501, debug=True)  # Run on your PC
