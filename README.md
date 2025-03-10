@@ -1,1 +1,1 @@
-# Python Password Strength Meter With Streamlit And SQLite (SQLite3)
+# Python Password Strength Meter With Streamlit And SQLite
