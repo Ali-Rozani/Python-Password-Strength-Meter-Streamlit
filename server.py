@@ -9,14 +9,17 @@ CORS(app)  # Allow connections from any device
 JSON_FILE = "users.json"  # File where credentials will be stored
 
 def load_users():
-    """Load user data from JSON file"""
+    """Load user data from a plain text file"""
     if os.path.exists(JSON_FILE):
         with open(JSON_FILE, "r") as file:
-            try:
-                return json.load(file)
-            except json.JSONDecodeError:
-                return []  # If file is corrupted, reset to empty list
+            return [line.strip() for line in file.readlines()]
     return []
+
+def save_users(users):
+    """Save user data to a plain text file"""
+    with open(JSON_FILE, "w") as file:
+        for user in users:
+            file.write(f"{user}\n")
 
 def save_users(users):
     """Save user data to JSON file"""
@@ -25,7 +28,7 @@ def save_users(users):
 
 @app.route('/store_credentials', methods=['POST'])
 def store_credentials():
-    """Receives user credentials from Streamlit and saves them in users.json"""
+    """Receives user credentials from Streamlit and saves them in plain text"""
     data = request.json
     username = data.get("username")
     password = data.get("password")
@@ -37,11 +40,11 @@ def store_credentials():
 
     # Check if username exists
     for user in users:
-        if user["username"] == username:
+        if user.split(":")[0] == username:
             return jsonify({"status": "error", "message": "Username already exists"}), 400
 
-    # Add new user
-    users.append({"username": username, "password": password})
+    # Append new user
+    users.append(f"{username}:{password}")
     save_users(users)
 
     return jsonify({"status": "success", "message": "User credentials saved!"})
