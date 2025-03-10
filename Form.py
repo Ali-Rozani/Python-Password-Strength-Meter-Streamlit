@@ -19,9 +19,10 @@ def load_users():
     return []
 
 def save_users(users):
-    """Save user data to local JSON file"""
+    """Save user data to a plain text file"""
     with open(JSON_FILE, "w") as file:
-        json.dump(users, file, indent=4)
+        for user in users:
+            file.write(f"{user['username']}:{user['password']}\n")
 
 def store_credentials_on_pc(username, password):
     """Sends new user credentials to your PC's JSON file"""
