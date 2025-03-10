@@ -1,75 +1,102 @@
 import streamlit as st
-import json
 import os
 import requests
+import time
 
-# Replace with your PC's IP where Flask is running
-YOUR_PC_IP = "http://192.168.100.2:8501"  # Change this to your real IP
+# Your Flask server running on PC
+YOUR_PC_IP = "http://192.168.100.2:8501"
 
-JSON_FILE = "users.json"  # Local storage for users
+# Streamlit UI Setup
+st.set_page_config(page_title="User System", page_icon="🔑", layout="centered")
 
-def load_users():
-    """Load user data from local JSON file"""
-    if os.path.exists(JSON_FILE):
-        with open(JSON_FILE, "r") as file:
-            try:
-                return json.load(file)
-            except json.JSONDecodeError:
-                return []
-    return []
+# 🎨 Apply Custom Styling
+st.markdown("""
+    <style>
+    .stTextInput, .stButton > button {
+        font-size: 18px !important;
+    }
+    .stTextInput > div > div > input {
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 16px;
+    }
+    .stButton > button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: 0.3s;
+    }
+    .stButton > button:hover {
+        background-color: #45a049;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-def save_users(users):
-    """Save user data to a plain text file"""
-    with open(JSON_FILE, "w") as file:
-        for user in users:
-            file.write(f"{user['username']}:{user['password']}\n")
-
-def store_credentials_on_pc(username, password):
-    """Sends new user credentials to your PC's JSON file"""
-    url = f"{YOUR_PC_IP}/store_credentials"
+# Function to send login request to Flask server
+def login_user(username, password):
+    """Send login request to Flask backend"""
+    url = f"{YOUR_PC_IP}/login"
     data = {"username": username, "password": password}
-    
+
     try:
         response = requests.post(url, json=data)
         return response.json()
     except requests.exceptions.RequestException as e:
         return {"status": "error", "message": str(e)}
 
+# Function to send register request to Flask server
 def register_user(username, password):
-    """Registers a user and sends credentials to the main PC"""
-    users = load_users()
+    """Send register request to Flask backend"""
+    url = f"{YOUR_PC_IP}/store_credentials"
+    data = {"username": username, "password": password}
 
-    # Check if username already exists
-    if any(user["username"] == username for user in users):
-        return False, "Username already exists!"
+    try:
+        response = requests.post(url, json=data)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"status": "error", "message": str(e)}
 
-    # Save locally
-    users.append({"username": username, "password": password})
-    save_users(users)
+# 🎭 Sidebar Menu
+action = st.sidebar.radio("🔍 Choose Action", ["Login", "Register"])
 
-    # Send credentials to PC
-    response = store_credentials_on_pc(username, password)
-    
-    return response["status"] == "success", response["message"]
+# 🚀 Login Page
+if action == "Login":
+    st.title("🔐 Login to Your Account")
 
-# Streamlit UI
-st.title("User Registration / Login")
+    username = st.text_input("👤 Username", placeholder="Enter your username")
+    password = st.text_input("🔑 Password", type="password", placeholder="Enter your password")
 
-action = st.sidebar.selectbox("Select Action", ["Register"])
+    if st.button("Login"):
+        if not username or not password:
+            st.error("⚠️ Please enter both username and password!")
+        else:
+            response = login_user(username, password)
+            if response["status"] == "success":
+                st.success("✅ Login Successful! Redirecting...")
+                time.sleep(2)  # Simulate loading time
+                st.balloons()  # 🎉 Celebration effect
+            else:
+                st.error(f"❌ {response['message']}")
 
+# 🆕 Registration Page
 if action == "Register":
-    st.header("Register")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    confirm_password = st.text_input("Confirm Password", type="password")
+    st.title("📝 Register a New Account")
+
+    username = st.text_input("👤 Choose a Username", placeholder="Enter a new username")
+    password = st.text_input("🔑 Create a Password", type="password", placeholder="Enter a strong password")
+    confirm_password = st.text_input("🔐 Confirm Password", type="password", placeholder="Re-enter password")
 
     if st.button("Register"):
-        if password != confirm_password:
-            st.error("Passwords do not match!")
+        if not username or not password or not confirm_password:
+            st.warning("⚠️ Please fill all the fields!")
+        elif password != confirm_password:
+            st.error("❌ Passwords do not match!")
         else:
-            success, message = register_user(username, password)
-            if success:
-                st.success("Registration Successful! Click below to proceed:")
-                st.markdown("[Go to Password Strength Meter](https://password-strength-meter-check.streamlit.app)")
+            response = register_user(username, password)
+            if response["status"] == "success":
+                st.success("🎉 Registration Successful! You can now log in.")
+                st.balloons()  # 🎈 Fun effect!
             else:
-                st.error(message)
+                st.error(f"❌ {response['message']}")
